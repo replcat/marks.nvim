@@ -1,4 +1,4 @@
-local M = { sign_cache = {} }
+local M = { sign_cache = {}, transform = { substitutions = {}, combinations = {} } }
 local builtin_marks = { ["."] = true, ["^"] = true, ["`"] = true, ["'"] = true,
                         ['"'] = true, ["<"] = true, [">"] = true, ["["] = true,
                         ["]"] = true }
@@ -6,20 +6,44 @@ for i = 0,9 do
   builtin_marks[tostring(i)] = true
 end
 
+local function has_placed(bufnr, line, id, group)
+  local placed = vim.fn.sign_getplaced(bufnr, { group = group, lnum = line, id = id })
+  local signs = placed[1] and placed[1].signs
+  return #signs > 0
+end
+
 function M.add_sign(bufnr, text, line, id, group, priority)
   priority = priority or 10
   local sign_name = "Marks_" .. text
   if not M.sign_cache[sign_name] then
     M.sign_cache[sign_name] = true
-    vim.fn.sign_define(sign_name, { text = text, texthl = "MarkSignHL",
+    local display_text = M.transform.substitutions[text] or text
+    vim.fn.sign_define(sign_name, { text = display_text, texthl = "MarkSignHL",
                                     numhl = "MarkSignNumHL" })
   end
   vim.fn.sign_place(id, group, sign_name, bufnr, { lnum = line, priority = priority })
+
+  for _, combination in ipairs(M.transform.combinations) do
+    if id == combination.display.id then return end
+    local is_matching_line = true
+    for _, match_id in ipairs(combination.match_ids) do
+      is_matching_line = is_matching_line and has_placed(bufnr, line, match_id, group)
+    end
+    if is_matching_line then
+      M.add_sign(bufnr, combination.display.text, line, combination.display.id, group, priority + 1)
+    end
+  end
 end
 
 function M.remove_sign(bufnr, id, group)
   group = group or "MarkSigns"
   vim.fn.sign_unplace(group, { buffer = bufnr, id = id })
+
+  for _, combination in ipairs(M.transform.combinations) do
+    if vim.tbl_contains(combination.match_ids, id) then
+      M.remove_sign(bufnr, combination.display.id, group)
+    end
+  end
 end
 
 function M.remove_buf_signs(bufnr, group)

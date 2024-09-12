@@ -252,6 +252,24 @@ function M.setup(config)
     M.bookmark_state.priority = config.sign_priority
   end
 
+  if type(config.sign_substitutions) == "table" then
+    utils.transform.substitutions = config.sign_substitutions
+  end
+
+  if type(config.sign_combinations) == "table" then
+    utils.transform.combinations = vim.iter(config.sign_combinations)
+        :map(function(entry)
+          local result = { match_ids = {}, display = { text = entry.display, id = 0 } }
+          for _, match_text in ipairs(entry) do
+            local match_id = match_text:byte() * 100
+            table.insert(result.match_ids, match_id)
+            result.display.id = result.display.id + match_id + 1
+          end
+          return result
+        end)
+        :totable()
+  end
+
   local refresh_interval = utils.option_nil(config.refresh_interval, 150)
 
   local timer = vim.loop.new_timer()
