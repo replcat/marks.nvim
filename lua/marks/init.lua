@@ -185,6 +185,7 @@ local function setup_autocommands()
   vim.cmd [[augroup Marks_autocmds
     autocmd!
     autocmd BufEnter * lua require'marks'.refresh(true)
+    autocmd CursorHold * lua require'marks'.refresh()
     autocmd BufDelete * lua require'marks'._on_delete()
   augroup end]]
 end
@@ -269,11 +270,6 @@ function M.setup(config)
         end)
         :totable()
   end
-
-  local refresh_interval = utils.option_nil(config.refresh_interval, 150)
-
-  local timer = vim.loop.new_timer()
-  timer:start(0, refresh_interval, vim.schedule_wrap(M.refresh))
 end
 
 return M
