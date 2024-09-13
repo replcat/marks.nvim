@@ -1,4 +1,4 @@
-local M = { sign_cache = {}, transform = { substitutions = {}, combinations = {} } }
+local M = { sign_cache = {}, transform = { substitutions = {}, combinations = {} }, highlight_groups = {} }
 local builtin_marks = { ["."] = true, ["^"] = true, ["`"] = true, ["'"] = true,
                         ['"'] = true, ["<"] = true, [">"] = true, ["["] = true,
                         ["]"] = true }
@@ -18,8 +18,8 @@ function M.add_sign(bufnr, text, line, id, group, priority)
   if not M.sign_cache[sign_name] then
     M.sign_cache[sign_name] = true
     local display_text = M.transform.substitutions[text] or text
-    vim.fn.sign_define(sign_name, { text = display_text, texthl = "MarkSignHL",
-                                    numhl = "MarkSignNumHL" })
+    vim.fn.sign_define(sign_name, { text = display_text, texthl = M.highlight_groups.texthl or "MarkSignHL",
+                                    numhl = M.highlight_groups.numhl or "MarkSignNumHL" })
   end
   vim.fn.sign_place(id, group, sign_name, bufnr, { lnum = line, priority = priority })
 

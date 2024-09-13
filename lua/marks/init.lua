@@ -253,6 +253,10 @@ function M.setup(config)
     M.bookmark_state.priority = config.sign_priority
   end
 
+  if type(config.highlight_groups) == "table" then
+    utils.highlight_groups = config.highlight_groups
+  end
+
   if type(config.sign_substitutions) == "table" then
     utils.transform.substitutions = config.sign_substitutions
   end
